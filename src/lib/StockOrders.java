@@ -99,38 +99,23 @@ public class StockOrders {
         }
     }
 
-    // Removes a specific order from the order book (linear scan within price level)
+
+    // Removes a specific order from the order book given an order within the list
     public boolean removeOrder(Order order) {
-        FixedPriceOrderQueue queue = priceToQueueMap.get(order.getPrice());
-        if (queue == null) return false;
 
-        Queue<Order> oldQueue = queue.getOrders();
-        Queue<Order> newQueue = new LinkedList<>();
+        if(priceToQueueMap.get(order.getPrice()).getOrders().remove(order)){
+            priceToQueueMap.get(order.getPrice()).adjustTotalVolume(-order.getVolume());
+            totalVolume -= order.getVolume();
 
-        boolean removed = false;
-        while (!oldQueue.isEmpty()) {
-            Order o = oldQueue.poll();
-            if (!removed && o.getOrderId().equals(order.getOrderId())) {
-                totalVolume -= o.getVolume();
-                queue.adjustTotalVolume(-o.getVolume());
-                removed = true;
-            } else {
-                newQueue.add(o);
+            // If queue is now empty, adjust the order-book accordingly
+            if (priceToQueueMap.get(order.getPrice()).getTotalVolume() <= 0) {
+                priceToQueueMap.remove(order.getPrice());
+                updateBestPrice();
             }
+            return true;
         }
-
-        if (removed) {
-            queue.getOrders().clear();
-            newQueue.forEach(queue::addOrder);
-        }
-
-        if (queue.getTotalVolume() <= 0) {
-            priceToQueueMap.remove(order.getPrice());
-            cleanupHeap();
-        }
-
-        updateBestPrice();
-        return removed;
+        // Removal failed.
+        return false;
     }
 
     // Internal: Removes empty queues from heap top
@@ -146,4 +131,18 @@ public class StockOrders {
         cleanupHeap();
         bestPrice = priceHeap.isEmpty() ? -1 : priceHeap.peek().getPrice();
     }
+
+    public void printSide() {
+        PriorityQueue<FixedPriceOrderQueue> tempHeap = new PriorityQueue<>(priceHeap);
+
+        while (!tempHeap.isEmpty()) {
+            FixedPriceOrderQueue queue = tempHeap.poll();
+            System.out.println("    Price: " + queue.getPrice() + ", Total Volume: " + queue.getTotalVolume());
+            for (Order order : queue.getOrders()) {
+                System.out.println("        OrderId: " + order.getOrderId() + ", UserId: " + order.getUserId() +
+                        ", Volume: " + order.getVolume() + ", Timestamp: " + order.getTimestamp());
+            }
+        }
+    }
+
 }

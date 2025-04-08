@@ -110,4 +110,17 @@ public class Order {
             return new Order(this);
         }
     }
+
+    @Override
+    public String toString() {
+        return "Order{" +
+                "stockSymbol='" + stockSymbol + '\'' +
+                ", price=" + price +
+                ", volume=" + volume +
+                ", timestamp=" + timestamp +
+                ", userId='" + userId + '\'' +
+                ", orderId='" + orderId + '\'' +
+                ", side=" + side +
+                '}';
+    }
 }

@@ -50,6 +50,15 @@ public class FixedPriceOrderQueue {
         return order;
     }
 
+    public Order peekOrder() {
+        Order order = orders.peek();
+        if(order != null){
+            return order;
+        }
+        return null;
+    }
+
+
     // Adjust total volume manually (e.g., after a partial fill)
     public void adjustTotalVolume(long delta) {
         this.totalVolume += delta;
